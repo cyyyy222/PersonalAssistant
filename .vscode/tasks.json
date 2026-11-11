@@ -1,0 +1,72 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Android: 构建、安装并启动",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-Command",
+        "$env:JAVA_HOME='D:\\android studio\\jbr'; $env:Path=\"$env:JAVA_HOME\\bin;D:\\Android\\Sdk\\platform-tools;$env:Path\"; .\\gradlew.bat :app:installDebug; if ($LASTEXITCODE -eq 0) { adb shell am start -n com.example.personalassistant/.MainActivity }"
+      ],
+      "problemMatcher": [],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "Android: 仅重新启动应用",
+      "type": "shell",
+      "command": "D:\\Android\\Sdk\\platform-tools\\adb.exe",
+      "args": [
+        "shell",
+        "am",
+        "start",
+        "-n",
+        "com.example.personalassistant/.MainActivity"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "后端: 启动服务",
+      "type": "shell",
+      "command": "${workspaceFolder}\\server\\gradlew.bat",
+      "args": [
+        "bootRun"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}\\server"
+      },
+      "isBackground": true,
+      "problemMatcher": []
+    },
+    {
+      "label": "后端: 释放 8080 端口",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-Command",
+        "Get-NetTCPConnection -LocalPort 8080 -State Listen -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force }"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "镜像模拟器 (scrcpy)",
+      "type": "shell",
+      "command": "${workspaceFolder}\\tools\\scrcpy-win64-v5.0.1\\scrcpy.exe",
+      "args": [
+        "-s",
+        "emulator-5554",
+        "--window-title",
+        "PersonalAssistant Emulator",
+        "--max-size",
+        "900"
+      ],
+      "isBackground": true,
+      "problemMatcher": []
+    }
+  ]
+}

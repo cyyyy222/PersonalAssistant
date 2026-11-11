@@ -36,10 +36,15 @@ fun AdaptivePair(first: @Composable (Modifier) -> Unit, second: @Composable (Mod
 @Composable
 fun HomeScreen(state: AssistantState, onCommand: () -> Unit) {
     PageColumn {
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            AppIcon(Glyph.Spark, tint = Green)
-            Text("个人助理", style = MaterialTheme.typography.titleSmall)
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                AppIcon(Glyph.Spark, tint = Green)
+                Text("个人助理", style = MaterialTheme.typography.titleSmall)
+            }
+            TextButton(onClick = { state.logout() }) {
+                Text("退出", color = Muted, style = MaterialTheme.typography.labelMedium)
+            }
         }
         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Text(LocalDate.now().format(DateTimeFormatter.ofPattern("M月d日 · EEEE", Locale.CHINESE)),
@@ -58,13 +63,22 @@ fun HomeScreen(state: AssistantState, onCommand: () -> Unit) {
                 IconButton(onClick = onCommand) { AppIcon(Glyph.Arrow, tint = Green, description = "执行演示指令") }
             })
         AdaptivePair(
-            first = { QuickCard("整理邮件", "${state.waitingCount} 封邮件待回复", Glyph.Mail, it) { state.selectTab("邮件") } },
+            first = {
+                QuickCard(
+                    "整理邮件",
+                    state.mailAccount?.let { "已连接 ${it.email}" } ?: "未绑定邮箱",
+                    Glyph.Mail, it
+                ) { state.selectTab("邮件") }
+            },
             second = { QuickCard("记录饮食", "今天已记录 ${state.mealCount} 餐", Glyph.Food, it) { state.openFood() } }
         )
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             SectionTitle("今日概览")
             Panel {
-                OverviewRow(Glyph.Mail, "邮件", "未读 ${state.unreadCount} 封 · 待回复 ${state.waitingCount} 封") { state.selectTab("邮件") }
+                OverviewRow(
+                    Glyph.Mail, "邮件",
+                    state.mailAccount?.let { "已连接 ${it.email}" } ?: "未绑定邮箱"
+                ) { state.selectTab("邮件") }
                 HorizontalDivider(color = Line)
                 OverviewRow(Glyph.Food, "饮食", "今日 ${state.todayFoods.size} 条记录") { state.selectTab("饮食") }
             }

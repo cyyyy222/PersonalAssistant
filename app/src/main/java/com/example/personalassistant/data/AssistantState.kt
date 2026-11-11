@@ -36,6 +36,40 @@ class AssistantState(private val preferences: SharedPreferences?, snapshot: Stri
     var time by mutableStateOf("")
     var foodDate by mutableStateOf(LocalDate.now().toString())
     var foodError by mutableStateOf(false)
+    var loginMode by mutableStateOf("账号")
+    var loginAccount by mutableStateOf("")
+    var loginPassword by mutableStateOf("")
+    var loginError by mutableStateOf<String?>(null)
+    var loginLoading by mutableStateOf(false)
+    var authToken by mutableStateOf("")
+    var authUser by mutableStateOf<AuthUser?>(null)
+    var demoMailMode by mutableStateOf(false)
+    var mailAccount by mutableStateOf<MailAccount?>(null)
+    var mailBindEmail by mutableStateOf("")
+    var mailBindSecret by mutableStateOf("")
+    var mailBindDisplayName by mutableStateOf("")
+    var mailBindError by mutableStateOf<String?>(null)
+    var mailBindLoading by mutableStateOf(false)
+    var mailAccountsLoading by mutableStateOf(false)
+    var remoteMails by mutableStateOf<List<RemoteMail>>(emptyList())
+    var remoteTotal by mutableStateOf(0L)
+    var remoteHasMore by mutableStateOf(false)
+    var mailQuery by mutableStateOf("")
+    var mailUnreadOnly by mutableStateOf(false)
+    var mailLoading by mutableStateOf(false)
+    var mailSyncing by mutableStateOf(false)
+    var mailError by mutableStateOf<String?>(null)
+    var selectedRemoteId by mutableStateOf<Long?>(null)
+    var remoteDetail by mutableStateOf<RemoteMailDetail?>(null)
+    var remoteDetailLoading by mutableStateOf(false)
+    var remoteDetailError by mutableStateOf<String?>(null)
+    var sendTo by mutableStateOf("")
+    var sendSubject by mutableStateOf("")
+    var sendBody by mutableStateOf("")
+    var sendLoading by mutableStateOf(false)
+    var sendError by mutableStateOf<String?>(null)
+
+    val isLoggedIn: Boolean get() = authToken.isNotBlank() && authUser != null
 
     init {
         mails.addAll(demoMails())
@@ -49,6 +83,55 @@ class AssistantState(private val preferences: SharedPreferences?, snapshot: Stri
     val mealCount: Int get() = todayFoods.map { it.meal }.distinct().size
     val waitingCount: Int get() = mails.count { it.waiting && !it.archived }
     val unreadCount: Int get() = mails.count { it.unread && !it.archived }
+
+    fun applySession(session: AuthSession) {
+        authToken = session.token
+        authUser = session.user
+        loginPassword = ""
+        loginError = null
+        loginLoading = false
+        tab = "首页"
+        page = "root"
+        persist()
+    }
+
+    fun logout() {
+        authToken = ""
+        authUser = null
+        loginPassword = ""
+        loginError = null
+        loginLoading = false
+        mailAccount = null
+        remoteMails = emptyList()
+        remoteDetail = null
+        selectedRemoteId = null
+        mailError = null
+        sendError = null
+        tab = "首页"
+        page = "root"
+        persist()
+    }
+
+    fun openMailAccount() {
+        mailBindError = null
+        mailBindSecret = ""
+        page = "mailAccount"
+    }
+
+    fun openRemoteDetail(messageId: Long) {
+        selectedRemoteId = messageId
+        remoteDetail = null
+        remoteDetailError = null
+        page = "remoteDetail"
+    }
+
+    fun openCompose(to: String = "", subject: String = "", body: String = "") {
+        sendTo = to
+        sendSubject = subject
+        sendBody = body
+        sendError = null
+        page = "compose"
+    }
 
     fun selectTab(value: String) { tab = value; page = "root" }
 
@@ -107,6 +190,7 @@ class AssistantState(private val preferences: SharedPreferences?, snapshot: Stri
         when (page) {
             "confirm" -> if (sendComplete) { page = "detail" } else { page = "draft" }
             "draft" -> { saveDraft(); page = "detail" }
+            "mailAccount", "remoteDetail", "compose" -> page = "root"
             "detail", "food" -> page = "root"
             else -> selectTab("首页")
         }
@@ -124,6 +208,8 @@ class AssistantState(private val preferences: SharedPreferences?, snapshot: Stri
             put("note", record.note); put("time", record.time); put("date", record.date)
         }) } })
         put("drafts", JSONObject().apply { drafts.forEach { (id, body) -> put(id, body) } })
+        put("authToken", authToken)
+        authUser?.let { put("authUser", it.toJson()) }
         if (includeSession) put("session", JSONObject().apply {
             put("tab", tab); put("page", page); put("selectedId", selectedId)
             put("query", query); put("filter", filter); put("assistantInput", assistantInput)
@@ -153,6 +239,12 @@ class AssistantState(private val preferences: SharedPreferences?, snapshot: Stri
             foods.clear(); foods.addAll(restored)
         }
         json.optJSONObject("drafts")?.let { values -> values.keys().forEach { drafts[it] = values.getString(it) } }
+        authToken = json.optString("authToken")
+        authUser = json.optJSONObject("authUser")?.let { runCatching { AuthUser.fromJson(it) }.getOrNull() }
+        if (authToken.isBlank() || authUser == null) {
+            authToken = ""
+            authUser = null
+        }
         json.optJSONObject("session")?.let {
             tab = it.getString("tab"); page = it.getString("page"); selectedId = it.getString("selectedId")
             query = it.getString("query"); filter = it.getString("filter"); assistantInput = it.getString("assistantInput")

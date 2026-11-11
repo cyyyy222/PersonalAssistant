@@ -1,6 +1,7 @@
 package com.example.personalassistant.ui
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -19,6 +20,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.PathParser
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.example.personalassistant.ui.theme.*
@@ -43,6 +45,8 @@ enum class Glyph(val path: String) {
     Sun("M16 12 A4 4 0 1 1 8 12 A4 4 0 1 1 16 12 M12 2 L12 4 M12 20 L12 22 M2 12 L4 12 M20 12 L22 12 M5 5 L6 6 M18 18 L19 19 M5 19 L6 18 M18 6 L19 5"),
     Moon("M20 15 A9 9 0 1 1 9 3 A8 8 0 0 0 20 15"),
     Cup("M5 7 L19 7 L18 21 L6 21 Z M8 3 L9 5 M13 2 L14 5 M19 10 Q24 10 21 15 L19 15"),
+    Eye("M2 12 C5 7.5 8.5 5 12 5 C15.5 5 19 7.5 22 12 C19 16.5 15.5 19 12 19 C8.5 19 5 16.5 2 12 Z M15 12 A3 3 0 1 1 9 12 A3 3 0 1 1 15 12"),
+    EyeOff("M2 12 C5 7.5 8.5 5 12 5 C15.5 5 19 7.5 22 12 C19 16.5 15.5 19 12 19 C8.5 19 5 16.5 2 12 Z M4 4 L20 20"),
     Close("M6 6 L18 18 M18 6 L6 18")
 }
 
@@ -99,6 +103,22 @@ fun Badge(text: String, green: Boolean = false) {
     Surface(shape = RoundedCornerShape(7.dp), color = if (green) SoftGreen else Color.White) {
         Text(text, Modifier.padding(horizontal = 8.dp, vertical = 4.dp), color = if (green) Green else Muted,
             style = MaterialTheme.typography.labelMedium)
+    }
+}
+
+@Composable
+fun SegmentedControl(options: List<String>, selected: String, onSelect: (String) -> Unit,
+    modifier: Modifier = Modifier) {
+    Row(modifier.fillMaxWidth().background(SoftGray, RoundedCornerShape(9.dp)).padding(2.dp)) {
+        options.forEach { option ->
+            val active = option == selected
+            Surface(onClick = { onSelect(option) }, modifier = Modifier.weight(1f), shape = RoundedCornerShape(7.dp),
+                color = if (active) Color.White else Color.Transparent,
+                contentColor = if (active) Ink else Muted) {
+                Text(option, Modifier.fillMaxWidth().padding(vertical = 5.dp), textAlign = TextAlign.Center,
+                    maxLines = 1, style = MaterialTheme.typography.labelMedium)
+            }
+        }
     }
 }
 

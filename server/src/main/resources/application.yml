@@ -1,0 +1,33 @@
+server:
+  port: 8080
+  address: 0.0.0.0
+
+spring:
+  datasource:
+    url: jdbc:mysql://127.0.0.1:3306/personal_assistant?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false
+    username: root
+    password: "a1s2d3f4g5h6"
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  sql:
+    init:
+      mode: always
+
+app:
+  jwt:
+    secret: "personal-assistant-local-demo-secret-change-before-production-2026"
+    expiration-seconds: 604800
+  mail:
+    # Local demo key. Override with MAIL_SECRET_KEY in a real environment.
+    secret-key: "cGVyc29uYWwtYXNzaXN0YW50LW1haWwta2V5LTMyISE="
+    sync-batch-size: 50
+    max-messages-per-sync: 300
+    connection-timeout-ms: 10000
+    read-timeout-ms: 15000
+    sync-interval-ms: 600000
+  storage:
+    type: local
+    local-root: ./data/attachments
+    s3:
+      bucket: ""
+      region: ""
+      endpoint: ""

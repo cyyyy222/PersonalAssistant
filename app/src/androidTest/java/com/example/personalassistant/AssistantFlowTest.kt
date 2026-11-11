@@ -8,6 +8,8 @@ import androidx.test.platform.app.InstrumentationRegistry
 import android.graphics.Bitmap
 import androidx.compose.ui.graphics.asAndroidBitmap
 import com.example.personalassistant.data.AssistantState
+import com.example.personalassistant.data.AuthSession
+import com.example.personalassistant.data.AuthUser
 import com.example.personalassistant.ui.AssistantApp
 import com.example.personalassistant.ui.theme.PersonalAssistantTheme
 import org.junit.Assert.*
@@ -21,10 +23,25 @@ class AssistantFlowTest {
 
     private fun start(restoration: StateRestorationTester? = null) {
         val content: @androidx.compose.runtime.Composable () -> Unit = {
-            state = rememberSaveable(saver = AssistantState.saver(null)) { AssistantState(null) }
+            state = rememberSaveable(saver = AssistantState.saver(null)) {
+                AssistantState(null).apply {
+                    applySession(AuthSession(
+                        "test-token",
+                        AuthUser(1, "caiyangyang", "13800138000", "Cai Yangyang")
+                    ))
+                    demoMailMode = true
+                }
+            }
             PersonalAssistantTheme { AssistantApp(state) }
         }
         if (restoration == null) rule.setContent(content) else restoration.setContent(content)
+    }
+
+    private fun startLoggedOut() {
+        rule.setContent {
+            state = rememberSaveable(saver = AssistantState.saver(null)) { AssistantState(null) }
+            PersonalAssistantTheme { AssistantApp(state) }
+        }
     }
 
     @Test fun mailDraftConfirmationAndSimulation() {
@@ -100,6 +117,15 @@ class AssistantFlowTest {
         rule.onNodeWithTag("mail_project").assertExists()
     }
 
+    @Test fun loginValidatesEmptyFields() {
+        startLoggedOut()
+        rule.onNodeWithTag("login_button").performClick()
+        rule.onNodeWithText("请输入账号或密码").assertExists()
+        rule.onNodeWithTag("login_account").performTextInput("caiyangyang")
+        rule.onNodeWithTag("login_password").performTextInput("123456789")
+        rule.onNodeWithTag("login_button").assertExists()
+    }
+
     @Test fun captureSevenScreensForVisualReview() {
         start()
         fun capture(name: String) {
@@ -118,5 +144,6 @@ class AssistantFlowTest {
         rule.runOnIdle { state.page = "confirm" }; capture("05-confirm")
         rule.runOnIdle { state.selectTab("饮食") }; capture("06-food")
         rule.runOnIdle { state.openFood() }; capture("07-food-entry")
+        rule.runOnIdle { state.logout() }; capture("08-login")
     }
 }
